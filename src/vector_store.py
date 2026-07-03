@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import time
 
-from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
+from langchain_huggingface import HuggingFaceEmbeddings
 
 from .config import settings
 
@@ -33,8 +33,12 @@ def ensure_index_exists() -> None:
         time.sleep(1)
 
 
-def get_embeddings() -> OpenAIEmbeddings:
-    return OpenAIEmbeddings(model=settings.embedding_model, api_key=settings.openai_api_key)
+def get_embeddings() -> HuggingFaceEmbeddings:
+    # Groq does not offer an embeddings API, so embeddings are generated
+    # locally via a HuggingFace sentence-transformers model instead.
+    # NOTE: this model outputs 384-dim vectors -- settings.embedding_dimension
+    # (used by ensure_index_exists) must be 384, not 1536.
+    return HuggingFaceEmbeddings(model_name=settings.embedding_model)
 
 
 def get_vector_store(namespace: str) -> PineconeVectorStore:

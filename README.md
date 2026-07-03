@@ -2,7 +2,7 @@
 
 Upload PDFs, ask questions in natural language, and get answers grounded in
 your documents with cited sources — powered by **LangChain**, **Pinecone**,
-**Streamlit**, and the **OpenAI API**.
+**Streamlit**, and the **Groq API**.
 
 ## Features
 
@@ -24,21 +24,21 @@ pypdf (per-page text extraction)
 RecursiveCharacterTextSplitter (chunking + metadata: source, page, chunk_id)
     │
     ▼
-OpenAI Embeddings (text-embedding-3-small)
+HuggingFace Embeddings (BAAI/bge-small-en-v1.5)
     │
     ▼
 Pinecone (serverless index, one namespace per collection)
     │
     ▼
-┌─────────────── on each question ───────────────┐
-│  history-aware retriever (condense follow-ups) │
-│              │                                 │
-│              ▼                                 │
-│  Pinecone similarity search (top-k chunks)     │
-│              │                                 │
-│              ▼                                 │
-│  ChatOpenAI (gpt-4o-mini) — answer from context│
-└────────────────────────────────────────────────┘
+┌─────────────── on each question ─────────────────────────┐
+│  history-aware retriever (condense follow-ups)           │
+│              │                                           │
+│              ▼                                           │
+│  Pinecone similarity search (top-k chunks)               │
+│              │                                           │
+│              ▼                                           │
+│  ChatGroq (llama-3.3-70b-versatile) — answer from context│
+└──────────────────────────────────────────────────────────┘
     │
     ▼
 Streamlit chat UI (answer + expandable sources)
@@ -56,6 +56,7 @@ documind/
 ├── app.py                     # Streamlit UI
 ├── src/
 │   ├── config.py              # Settings loaded from .env
+│   ├── db.py
 │   ├── document_processor.py  # PDF text extraction + chunking
 │   ├── vector_store.py        # Pinecone index + LangChain vector store
 │   ├── qa_chain.py            # Conversational RAG chain (LCEL)
@@ -75,7 +76,7 @@ pip install -r requirements.txt
 
 **2. Get your API keys**
 
-- OpenAI: https://platform.openai.com/api-keys
+- Groq: https://console.groq.com/keys
 - Pinecone: https://app.pinecone.io (free tier supports serverless indexes)
 
 **3. Configure environment variables**
@@ -115,12 +116,12 @@ Open the URL Streamlit prints (typically `http://localhost:8501`).
 
 | Variable | Default | Notes |
 |---|---|---|
-| `OPENAI_API_KEY` | — | required |
+| `GROQ_API_KEY` | — | required |
 | `PINECONE_API_KEY` | — | required |
 | `PINECONE_INDEX_NAME` | `documind` | created automatically if missing |
 | `PINECONE_CLOUD` / `PINECONE_REGION` | `aws` / `us-east-1` | serverless index location |
 | `EMBEDDING_MODEL` | `text-embedding-3-small` | also supports `text-embedding-3-large`, `text-embedding-ada-002` |
-| `LLM_MODEL` | `gpt-4o-mini` | any chat-completion-capable OpenAI model |
+| `LLM_MODEL` | `llama-3.3-70b-versatile` | any chat-completion-capable Groq model |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | `1000` / `150` | characters per chunk |
 | `RETRIEVAL_K` | `4` | number of chunks retrieved per question |
 

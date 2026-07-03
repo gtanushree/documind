@@ -50,10 +50,10 @@ def render_sources(sources: list[dict]) -> None:
 # Sidebar — collection management
 with st.sidebar:
     st.title("📄 DocuMind")
-    st.caption("AI-powered document Q&A — LangChain · Pinecone · OpenAI")
+    st.caption("AI-powered document Q&A — LangChain · Pinecone · Groq")
 
     if not settings.is_configured():
-        st.error("Missing API keys. Add OPENAI_API_KEY and PINECONE_API_KEY to a `.env` file (see `.env.example`).")
+        st.error("Missing API keys. Add GROQ_API_KEY and PINECONE_API_KEY to a `.env` file (see `.env.example`).")
         st.stop()
 
     st.divider()

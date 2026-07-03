@@ -5,7 +5,7 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import Runnable, RunnableBranch, RunnablePassthrough
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 
 from .config import settings
 from .vector_store import get_vector_store
@@ -51,7 +51,7 @@ def _format_docs(docs: list[Document]) -> str:
 def build_chain(namespace: str, k: int | None = None) -> Runnable:
     k = k or settings.retrieval_k
     retriever = get_vector_store(namespace).as_retriever(search_kwargs={"k": k})
-    llm = ChatOpenAI(model=settings.llm_model, api_key=settings.openai_api_key, temperature=0.1)
+    llm = ChatGroq(model=settings.llm_model, groq_api_key=settings.groq_api_key, temperature=0.1)
 
     condense_chain = CONDENSE_PROMPT | llm | StrOutputParser()
 
