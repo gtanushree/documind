@@ -36,6 +36,12 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+from fastapi.responses import RedirectResponse
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/docs")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # tighten for production
