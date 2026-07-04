@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DocuMind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  /* ── tokens ─────────────────────────────────────────────────── */
+  :root {
+    --bg:        #0f1117;
+    --surface:   #181c27;
+    --border:    #252a38;
+    --border-hi: #353c52;
+    --accent:    #6c8ef5;
+    --accent-dim:#2a3460;
+    --green:     #3ecf8e;
+    --red:       #f56565;
+    --text:      #e2e8f0;
+    --muted:     #718096;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'Inter', sans-serif;
+    --sidebar:   280px;
+    --radius:    10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  /* ── sidebar ─────────────────────────────────────────────────── */
+  #sidebar {
+    width: var(--sidebar);
+    min-width: var(--sidebar);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 4px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent-dim);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    font-size: 16px;
+  }
+  .logo-text { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-sub  { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+  .divider { height: 1px; background: var(--border); }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  /* collection selector */
+  #ns-select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23718096' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+  #ns-select:focus { outline: none; border-color: var(--accent); }
+
+  /* new collection row */
+  .input-row { display: flex; gap: 6px; }
+  .input-row input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 13px;
+  }
+  .input-row input:focus { outline: none; border-color: var(--accent); }
+  .input-row input::placeholder { color: var(--muted); }
+
+  /* buttons */
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    transition: opacity .15s, background .15s;
+  }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) { opacity: .85; }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--border-hi); color: var(--text); }
+
+  .btn-danger {
+    background: transparent;
+    border: 1px solid #7a2a2a;
+    color: var(--red);
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  .btn-danger:hover:not(:disabled) { background: #3b1111; }
+
+  .btn-full { width: 100%; }
+
+  /* file list */
+  .file-list { display: flex; flex-direction: column; gap: 4px; }
+  .file-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .file-item .fi-icon { font-size: 14px; margin-top: 1px; }
+  .file-item .fi-name { font-weight: 500; word-break: break-all; }
+  .file-item .fi-meta { color: var(--muted); font-size: 11px; margin-top: 1px; }
+
+  .stat-pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    align-self: flex-start;
+  }
+
+  /* upload zone */
+  #upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+  #upload-zone:hover, #upload-zone.drag { border-color: var(--accent); background: var(--accent-dim); }
+  #upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-label { font-size: 12px; color: var(--muted); pointer-events: none; }
+  .upload-label span { color: var(--accent); }
+  #file-count { font-size: 11px; color: var(--green); margin-top: 4px; font-family: var(--mono); }
+
+  /* settings accordion */
+  details > summary {
+    list-style: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+  details > summary::before { content: '▶'; font-size: 9px; transition: transform .2s; }
+  details[open] > summary::before { transform: rotate(90deg); }
+  details .settings-body {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  /* ── main panel ──────────────────────────────────────────────── */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* header */
+  #main-header {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  #main-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; }
+  #ns-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  /* chat messages */
+  #chat-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    scroll-behavior: smooth;
+  }
+
+  /* empty state */
+  #empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 40px;
+  }
+  #empty-state .es-icon { font-size: 48px; opacity: .3; }
+  #empty-state p { font-size: 14px; max-width: 340px; line-height: 1.6; }
+
+  /* message bubbles */
+  .msg { display: flex; flex-direction: column; gap: 6px; max-width: 720px; }
+  .msg.user { align-self: flex-end; align-items: flex-end; }
+  .msg.assistant { align-self: flex-start; align-items: flex-start; }
+
+  .msg-role {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .msg.user .msg-role { color: var(--accent); }
+
+  .msg-bubble {
+    padding: 12px 16px;
+    border-radius: 14px;
+    line-height: 1.65;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .msg.user .msg-bubble {
+    background: var(--accent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.assistant .msg-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+
+  /* typing indicator */
+  .typing { display: flex; gap: 4px; align-items: center; padding: 14px 16px; }
+  .typing span {
+    width: 7px; height: 7px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: bounce .9s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: .15s; }
+  .typing span:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce {
+    0%,60%,100% { transform: translateY(0); }
+    30%          { transform: translateY(-6px); }
+  }
+
+  /* sources accordion */
+  .sources-toggle {
+    font-size: 11px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .sources-toggle:hover { border-color: var(--border-hi); color: var(--text); }
+  .sources-panel {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .sources-panel.open { display: flex; }
+  .source-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .source-card .sc-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .sc-page {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .sc-snippet { color: var(--muted); line-height: 1.5; }
+
+  /* chat input bar */
+  #input-bar {
+    padding: 16px 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+  #question {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-size: 14px;
+    resize: none;
+    min-height: 48px;
+    max-height: 160px;
+    overflow-y: auto;
+    line-height: 1.5;
+    transition: border-color .15s;
+  }
+  #question:focus { outline: none; border-color: var(--accent); }
+  #question::placeholder { color: var(--muted); }
+  #question:disabled { opacity: .5; }
+
+  #send-btn {
+    background: var(--accent);
+    color: #fff;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 18px;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  #send-btn:hover:not(:disabled) { opacity: .85; }
+
+  /* toast */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    transition: transform .3s ease, opacity .3s ease;
+    opacity: 0;
+    z-index: 999;
+    pointer-events: none;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--green); color: var(--green); }
+  #toast.error   { border-color: var(--red); color: var(--red); }
+
+  /* progress bar */
+  #progress-wrap {
+    display: none;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  #progress-wrap.show { display: block; }
+  #progress-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0;
+    transition: width .4s ease;
+    border-radius: 2px;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- ── sidebar ─────────────────────────────────────────────────── -->
+<aside id="sidebar">
+
+  <div class="logo">
+    <div class="logo-icon">📄</div>
+    <div>
+      <div class="logo-text">DocuMind</div>
+      <div class="logo-sub">AI Document Q&amp;A</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- collection selector -->
+  <div>
+    <div class="section-label">Collection</div>
+    <select id="ns-select"></select>
+  </div>
+
+  <!-- new collection -->
+  <div>
+    <div class="section-label">New Collection</div>
+    <div class="input-row">
+      <input id="ns-input" type="text" placeholder="e.g. research-papers" />
+      <button class="btn-primary" id="ns-create-btn" disabled>＋</button>
+    </div>
+  </div>
+
+  <!-- upload -->
+  <div id="upload-section" style="display:none">
+    <div class="divider"></div>
+    <div class="section-label">Upload PDFs</div>
+    <div id="upload-zone">
+      <input type="file" id="file-input" multiple accept=".pdf" />
+      <div class="upload-label">Drop PDFs here or <span>browse</span></div>
+      <div id="file-count"></div>
+    </div>
+    <div id="progress-wrap"><div id="progress-bar"></div></div>
+    <button class="btn-primary btn-full" id="index-btn" style="margin-top:8px" disabled>
+      Process &amp; Index
+    </button>
+  </div>
+
+  <!-- indexed files -->
+  <div id="files-section" style="display:none">
+    <div class="divider"></div>
+    <div class="section-label">Indexed Files</div>
+    <div class="file-list" id="file-list"></div>
+    <div id="vec-count" class="stat-pill" style="margin-top:6px;display:none"></div>
+  </div>
+
+  <!-- actions -->
+  <div id="actions-section" style="display:none">
+    <div class="divider"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn-ghost" id="clear-btn">Clear chat</button>
+      <button class="btn-danger" id="delete-btn">Delete collection</button>
+    </div>
+  </div>
+
+  <div style="flex:1"></div>
+
+  <!-- settings -->
+  <details>
+    <summary>⚙ Settings</summary>
+    <div class="settings-body" id="settings-body">Loading…</div>
+  </details>
+
+</aside>
+
+<!-- ── main ────────────────────────────────────────────────────── -->
+<main id="main">
+
+  <header id="main-header">
+    <h1>DocuMind</h1>
+    <span id="ns-badge" style="display:none"></span>
+  </header>
+
+  <!-- empty state shown before a collection is active -->
+  <div id="empty-state">
+    <div class="es-icon">📂</div>
+    <p>Create or select a collection, then upload PDFs to start asking questions.</p>
+  </div>
+
+  <!-- chat scroll area (hidden until active) -->
+  <div id="chat-scroll" style="display:none"></div>
+
+  <!-- input bar -->
+  <div id="input-bar">
+    <textarea id="question" rows="1" placeholder="Ask something about your documents…" disabled></textarea>
+    <button id="send-btn" disabled title="Send">↑</button>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ── config ─────────────────────────────────────────────────────────────────
+// Change this to your Vercel URL when deploying the frontend elsewhere.
+// When the HTML is served from the same domain as the API, leave as "".
+const API_BASE = "";   // e.g. "https://documind-xxx.vercel.app"
+
+// ── state ──────────────────────────────────────────────────────────────────
+let namespace = null;
+let chatHistory = [];   // [{role, content, sources?}]
+let selectedFiles = [];
+let busy = false;
+
+// ── helpers ────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+async function api(method, path, body = null, isForm = false) {
+  const opts = { method, headers: {} };
+  if (body && !isForm) { opts.body = JSON.stringify(body); opts.headers["Content-Type"] = "application/json"; }
+  if (body && isForm)  { opts.body = body; }
+  const r = await fetch(API_BASE + path, opts);
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP ${r.status}`);
+  }
+  return r.json();
+}
+
+function toast(msg, type = "success") {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.className = "", 3000);
+}
+
+function setProgress(pct) {
+  const wrap = $("progress-wrap"), bar = $("progress-bar");
+  if (pct === null) { wrap.classList.remove("show"); bar.style.width = "0"; return; }
+  wrap.classList.add("show");
+  bar.style.width = pct + "%";
+}
+
+// auto-grow textarea
+$("question").addEventListener("input", function () {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 160) + "px";
+});
+
+// ── collections ────────────────────────────────────────────────────────────
+async function loadCollections() {
+  try {
+    const { collections } = await api("GET", "/collections");
+    const sel = $("ns-select");
+    sel.innerHTML = `<option value="">— select a collection —</option>`;
+    collections.forEach(ns => {
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = ns;
+      if (ns === namespace) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch (e) { toast("Could not reach API: " + e.message, "error"); }
+}
+
+async function loadHealth() {
+  try {
+    const h = await api("GET", "/health");
+    $("settings-body").innerHTML =
+      `<div>LLM: ${h.llm_model}</div>
+       <div>Embeddings: ${h.embedding_model}</div>
+       <div>Pinecone index: ${h.pinecone_index}</div>
+       <div>API status: <span style="color:var(--green)">● online</span></div>`;
+  } catch (e) {
+    $("settings-body").textContent = "API unreachable";
+  }
+}
+
+$("ns-input").addEventListener("input", function () {
+  $("ns-create-btn").disabled = !this.value.trim();
+});
+
+$("ns-create-btn").addEventListener("click", async () => {
+  const name = $("ns-input").value.trim().toLowerCase().replace(/ /g, "-");
+  if (!name) return;
+  try {
+    await api("POST", "/collections", { name });
+    $("ns-input").value = "";
+    $("ns-create-btn").disabled = true;
+    await loadCollections();
+    $("ns-select").value = name;
+    await switchNamespace(name);
+    toast(`Collection '${name}' created`);
+  } catch (e) { toast(e.message, "error"); }
+});
+
+$("ns-select").addEventListener("change", async function () {
+  if (this.value) await switchNamespace(this.value);
+  else await switchNamespace(null);
+});
+
+async function switchNamespace(ns) {
+  namespace = ns;
+  chatHistory = [];
+  renderChat();
+
+  const hasNs = !!ns;
+  $("upload-section").style.display  = hasNs ? "block" : "none";
+  $("files-section").style.display   = hasNs ? "block" : "none";
+  $("actions-section").style.display = hasNs ? "block" : "none";
+  $("ns-badge").style.display        = hasNs ? "inline-block" : "none";
+  $("ns-badge").textContent          = ns || "";
+
+  if (hasNs) {
+    await loadCollectionInfo();
+    enableChat(true);
+  } else {
+    enableChat(false);
+    showEmpty();
+  }
+}
+
+async function loadCollectionInfo() {
+  if (!namespace) return;
+  try {
+    const info = await api("GET", `/collections/${namespace}`);
+    const list = $("file-list");
+    list.innerHTML = "";
+    if (info.files.length === 0) {
+      list.innerHTML = `<div style="font-size:12px;color:var(--muted)">No files indexed yet.</div>`;
+    } else {
+      info.files.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "file-item";
+        div.innerHTML =
+          `<div class="fi-icon">📄</div>
+           <div>
+             <div class="fi-name">${f.name}</div>
+             <div class="fi-meta">${f.pages} pages · ${f.chunks} chunks</div>
+           </div>`;
+        list.appendChild(div);
+      });
+    }
+    const vc = $("vec-count");
+    vc.textContent = `${info.vector_count} vectors in Pinecone`;
+    vc.style.display = "block";
+  } catch (e) { toast("Could not load collection info", "error"); }
+}
+
+// ── upload & index ─────────────────────────────────────────────────────────
+$("file-input").addEventListener("change", function () {
+  selectedFiles = Array.from(this.files);
+  $("file-count").textContent = selectedFiles.length
+    ? `${selectedFiles.length} file(s) selected`
+    : "";
+  $("index-btn").disabled = selectedFiles.length === 0;
+});
+
+// drag & drop
+const zone = $("upload-zone");
+zone.addEventListener("dragover",  e => { e.preventDefault(); zone.classList.add("drag"); });
+zone.addEventListener("dragleave", () => zone.classList.remove("drag"));
+zone.addEventListener("drop",      e => {
+  e.preventDefault(); zone.classList.remove("drag");
+  selectedFiles = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith(".pdf"));
+  $("file-count").textContent = selectedFiles.length ? `${selectedFiles.length} file(s) ready` : "Only PDFs accepted";
+  $("index-btn").disabled = selectedFiles.length === 0;
+});
+
+$("index-btn").addEventListener("click", async () => {
+  if (!namespace || selectedFiles.length === 0) return;
+  $("index-btn").disabled = true;
+  $("index-btn").textContent = "Indexing…";
+  setProgress(20);
+  try {
+    const form = new FormData();
+    selectedFiles.forEach(f => form.append("files", f));
+    setProgress(50);
+    const res = await fetch(API_BASE + `/collections/${namespace}/upload`, { method: "POST", body: form });
+    setProgress(90);
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+    const data = await res.json();
+    setProgress(100);
+    setTimeout(() => setProgress(null), 800);
+    toast(`Indexed ${data.files.length} file(s), ${data.total_chunks} chunks`);
+    selectedFiles = [];
+    $("file-input").value = "";
+    $("file-count").textContent = "";
+    await loadCollectionInfo();
+    enableChat(true);
+  } catch (e) {
+    setProgress(null);
+    toast(e.message, "error");
+  } finally {
+    $("index-btn").disabled = false;
+    $("index-btn").textContent = "Process & Index";
+  }
+});
+
+// ── chat ───────────────────────────────────────────────────────────────────
+function enableChat(on) {
+  $("question").disabled = !on;
+  $("send-btn").disabled = !on;
+  if (on && chatHistory.length === 0) showEmpty();
+}
+
+function showEmpty() {
+  $("empty-state").style.display = "";
+  $("chat-scroll").style.display = "none";
+}
+
+function showChat() {
+  $("empty-state").style.display = "none";
+  $("chat-scroll").style.display = "flex";
+}
+
+function renderChat() {
+  const scroll = $("chat-scroll");
+  scroll.innerHTML = "";
+  if (chatHistory.length === 0) { showEmpty(); return; }
+  showChat();
+  chatHistory.forEach(turn => appendBubble(turn.role, turn.content, turn.sources));
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+function appendBubble(role, content, sources = []) {
+  showChat();
+  const scroll = $("chat-scroll");
+  const msg = document.createElement("div");
+  msg.className = `msg ${role}`;
+
+  const roleLabel = document.createElement("div");
+  roleLabel.className = "msg-role";
+  roleLabel.textContent = role === "user" ? "You" : "DocuMind";
+
+  const bubble = document.createElement("div");
+  bubble.className = "msg-bubble";
+  bubble.textContent = content;
+
+  msg.appendChild(roleLabel);
+  msg.appendChild(bubble);
+
+  if (sources && sources.length > 0) {
+    const toggle = document.createElement("button");
+    toggle.className = "sources-toggle";
+    toggle.innerHTML = `📎 ${sources.length} source${sources.length > 1 ? "s" : ""}`;
+
+    const panel = document.createElement("div");
+    panel.className = "sources-panel";
+
+    sources.forEach(s => {
+      const card = document.createElement("div");
+      card.className = "source-card";
+      card.innerHTML =
+        `<div class="sc-header">
+           <span>📄 ${s.source}</span>
+           <span class="sc-page">p. ${s.page}</span>
+         </div>
+         <div class="sc-snippet">${s.snippet}</div>`;
+      panel.appendChild(card);
+    });
+
+    toggle.addEventListener("click", () => panel.classList.toggle("open"));
+    msg.appendChild(toggle);
+    msg.appendChild(panel);
+  }
+
+  scroll.appendChild(msg);
+  scroll.scrollTop = scroll.scrollHeight;
+  return bubble;
+}
+
+function addTypingIndicator() {
+  showChat();
+  const scroll = $("chat-scroll");
+  const msg = document.createElement("div");
+  msg.className = "msg assistant";
+  msg.id = "typing-indicator";
+
+  const roleLabel = document.createElement("div");
+  roleLabel.className = "msg-role";
+  roleLabel.textContent = "DocuMind";
+
+  const bubble = document.createElement("div");
+  bubble.className = "msg-bubble";
+  bubble.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+
+  msg.appendChild(roleLabel);
+  msg.appendChild(bubble);
+  scroll.appendChild(msg);
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const el = $("typing-indicator");
+  if (el) el.remove();
+}
+
+async function sendQuestion() {
+  const q = $("question").value.trim();
+  if (!q || busy || !namespace) return;
+
+  busy = true;
+  $("question").disabled = true;
+  $("send-btn").disabled = true;
+  $("question").value = "";
+  $("question").style.height = "auto";
+
+  chatHistory.push({ role: "user", content: q });
+  appendBubble("user", q);
+  addTypingIndicator();
+
+  try {
+    const historyForApi = chatHistory.slice(0, -1).map(t => ({ role: t.role, content: t.content }));
+    const res = await api("POST", `/collections/${namespace}/chat`, {
+      question: q,
+      history: historyForApi,
+    });
+    removeTypingIndicator();
+    chatHistory.push({ role: "assistant", content: res.answer, sources: res.sources });
+    appendBubble("assistant", res.answer, res.sources);
+  } catch (e) {
+    removeTypingIndicator();
+    toast(e.message, "error");
+    chatHistory.pop(); // remove the user turn since it failed
+  } finally {
+    busy = false;
+    $("question").disabled = false;
+    $("send-btn").disabled = false;
+    $("question").focus();
+  }
+}
+
+$("send-btn").addEventListener("click", sendQuestion);
+$("question").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendQuestion(); }
+});
+
+// ── collection actions ─────────────────────────────────────────────────────
+$("clear-btn").addEventListener("click", () => {
+  chatHistory = [];
+  renderChat();
+});
+
+$("delete-btn").addEventListener("click", async () => {
+  if (!namespace) return;
+  if (!confirm(`Delete collection "${namespace}" and all its vectors? This cannot be undone.`)) return;
+  try {
+    await api("DELETE", `/collections/${namespace}`);
+    namespace = null;
+    chatHistory = [];
+    await loadCollections();
+    $("ns-select").value = "";
+    await switchNamespace(null);
+    toast("Collection deleted");
+  } catch (e) { toast(e.message, "error"); }
+});
+
+// ── init ───────────────────────────────────────────────────────────────────
+(async () => {
+  await Promise.all([loadCollections(), loadHealth()]);
+})();
+</script>
+</body>
+</html>
