@@ -1,12 +1,23 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
 
-REGISTRY_PATH = Path(__file__).resolve().parent.parent / "data" / "registry.json"
+_use_tmp = bool(os.getenv("VERCEL") or os.getenv("DOCUMIND_TMP_REGISTRY"))
+ 
+REGISTRY_PATH: Path = (
+    Path("/tmp/registry.json")
+    if _use_tmp
+    else Path(__file__).resolve().parent.parent / "data" / "registry.json"
+)
+ 
 _lock = Lock()
+
+#REGISTRY_PATH = Path(__file__).resolve().parent.parent / "data" / "registry.json"
+#_lock = Lock()
 
 
 def _ensure_file() -> None:
