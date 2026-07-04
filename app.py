@@ -50,7 +50,7 @@ def render_sources(sources: list[dict]) -> None:
 # Sidebar — collection management
 with st.sidebar:
     st.title("📄 DocuMind")
-    st.caption("AI-powered document Q&A — LangChain · Pinecone · Groq")
+    st.caption("AI-powered document Q&A : LangChain · Pinecone · Groq")
 
     if not settings.is_configured():
         st.error("Missing API keys. Add GROQ_API_KEY and PINECONE_API_KEY to a `.env` file (see `.env.example`).")
@@ -58,7 +58,7 @@ with st.sidebar:
 
     st.divider()
     st.subheader("Collection")
-    st.caption("Each collection is an isolated Pinecone namespace — keep unrelated document sets separate.")
+    st.caption("Each collection is an isolated namespace — keep unrelated document sets separate.")
 
     namespaces = registry.list_namespaces()
     options = ["+ New collection"] + namespaces
