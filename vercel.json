@@ -4,6 +4,14 @@
     "index.py": {"maxDuration": 60}
   },
   "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/health", "destination": "/index.py" },
+    { "source": "/collections", "destination": "/index.py" },
+    { "source": "/collections/(.*)", "destination": "/index.py" },
+    { "source": "/docs", "destination": "/index.py" },
+    { "source": "/redoc", "destination": "/index.py" },
+    { "source": "/openapi.json", "destination": "/index.py" }
+  ],
   "build": {
     "env": {
       "PYTHON_VERSION": "3.12"
