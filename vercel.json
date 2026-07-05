@@ -5,6 +5,7 @@
   },
   "outputDirectory": "public",
   "rewrites": [
+    { "source": "/", "destination": "/index.html" },
     { "source": "/health", "destination": "/index.py" },
     { "source": "/collections", "destination": "/index.py" },
     { "source": "/collections/(.*)", "destination": "/index.py" },
